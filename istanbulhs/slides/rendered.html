@@ -221,13 +221,18 @@ checkG <span class="fu">=</span> check <span class="fu">.</span> g <span class="
 <section id="data-ile-veri-tipi-tanımlama-ve-pattern-matching" class="slide level1">
 <h1><code>data</code> ile veri tipi tanımlama ve pattern matching</h1>
 <pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Cevap</span> <span class="fu">=</span> <span class="dt">Evet</span> <span class="fu">|</span> <span class="dt">Hayir</span> <span class="fu">|</span> <span class="dt">Bilinmiyor</span>
-             <span class="kw">deriving</span> (<span class="dt">Show</span>, <span class="dt">Eq</span>)
+             <span class="kw">deriving</span> (<span class="dt">Show</span>)
 
-<span class="co">-- case ifadeleri</span>
 ters x <span class="fu">=</span> <span class="kw">case</span> x <span class="kw">of</span>
   <span class="dt">Evet</span>  <span class="ot">-&gt;</span> <span class="dt">Hayir</span>
   <span class="dt">Hayir</span> <span class="ot">-&gt;</span> <span class="dt">Evet</span>
-  _     <span class="ot">-&gt;</span> x</code></pre>
+  _     <span class="ot">-&gt;</span> x
+
+<span class="kw">instance</span> <span class="dt">Eq</span> <span class="dt">Cevap</span> <span class="kw">where</span>
+  <span class="dt">Evet</span>       <span class="fu">==</span> <span class="dt">Evet</span>       <span class="fu">=</span> <span class="dt">True</span>
+  <span class="dt">Hayir</span>      <span class="fu">==</span> <span class="dt">Hayir</span>      <span class="fu">=</span> <span class="dt">True</span>
+  <span class="dt">Bilinmiyor</span> <span class="fu">==</span> <span class="dt">Bilinmiyor</span> <span class="fu">=</span> <span class="dt">True</span>
+  _          <span class="fu">==</span> _          <span class="fu">=</span> <span class="dt">False</span></code></pre>
 </section>
 <section id="kaçınılmaz-soru-monad-nedir" class="slide level1">
 <h1>Kaçınılmaz soru: Monad nedir?</h1>

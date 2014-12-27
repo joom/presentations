@@ -24,7 +24,7 @@ tekrarli :: Eq a => [a] -> Bool
 tekrarli (x:y:xs) = x == y
 
 data Cevap = Evet | Hayir | Bilinmiyor
-             deriving (Show, Eq)
+             deriving (Show)
 
 -- case ifadeleri
 ters x = case x of
@@ -32,6 +32,11 @@ ters x = case x of
   Hayir -> Evet
   _     -> x
 
+instance Eq Cevap where
+  Evet       == Evet       = True
+  Hayir      == Hayir      = True
+  Bilinmiyor == Bilinmiyor = True
+  _          == _          = False
 
 toList :: String -> [Int]
 toList input = read ("[" ++ input ++ "]")

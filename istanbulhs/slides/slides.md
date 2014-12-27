@@ -101,13 +101,18 @@ checkG = check . g --yani checkH x = check (g x)
 
 ```haskell
 data Cevap = Evet | Hayir | Bilinmiyor
-             deriving (Show, Eq)
+             deriving (Show)
 
--- case ifadeleri
 ters x = case x of
   Evet  -> Hayir
   Hayir -> Evet
   _     -> x
+
+instance Eq Cevap where
+  Evet       == Evet       = True
+  Hayir      == Hayir      = True
+  Bilinmiyor == Bilinmiyor = True
+  _          == _          = False
 ```
 
 # Kaçınılmaz soru: Monad nedir?
