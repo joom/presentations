@@ -1,0 +1,89 @@
+\documentclass{beamer}
+\usepackage{listings, bussproofs}
+
+\usetheme{Warsaw}
+\usecolortheme{wolverine}
+\beamertemplatenavigationsymbolsempty
+
+\title{Intro to Interactive Theorem Proving}
+\author{Joomy Korkut}
+\institute{Wesleyan University}
+\date{October 5th, 2017}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}{Why?}
+\begin{itemize}
+\item<1-> Proofs are too long to write formally!
+\item<2-> Proofs are too long to check carefully!
+\item<3-> Seeing what we proved so far helps during the proof process.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Examples}
+\begin{itemize}
+  \item<1-> Four color theorem (required checking 1,936 cases)
+  \\ Appel \& Haken 1976 with computer assistance
+  \\ Werner \& Gonthier 2015 with Coq
+  \item<2-> Kepler conjecture (hexagonal close packing of spheres)
+  \\ Hales 1998 with computer assistance (C++ etc.)
+  \\ Hales 2014 with HOL Light and Isabelle (Flyspeck)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{How?}
+\begin{itemize}
+\item<1-> Curry-Howard isomorphism
+\item<2-> Calculus of inductive constructions
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Curry-Howard Isomorphism}
+  for simply typed $\lambda$-calculus and intuitionistic prop logic,
+  \begin{itemize}
+    \item Types are propositions!
+    \pause
+    \item Terms are proofs!
+  \end{itemize}
+
+  \pause
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{prooftree}
+        \AxiomC{$\Gamma, A \vdash B$}
+        \UnaryInfC{$\Gamma \vdash A \to B$}
+      \end{prooftree}
+    \end{column}
+    \begin{column}{0.5\textwidth}  %%<--- here
+      \begin{prooftree}
+        \AxiomC{$\Gamma, x : A \vdash t : B$}
+        \UnaryInfC{$\Gamma \vdash \lambda x.t : A \to B$}
+      \end{prooftree}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Calculus of Inductive Constructions}
+  \begin{itemize}
+    \item Extension of Curry-Howard to an higher-order type theory based
+    \item Allows $\forall$ and $\exists$ in your types
+  \end{itemize}
+  \pause
+  \begin{alertblock}{Note}
+  CIC is constructive, but you can add
+  the law of excluded middle as an axiom and prove classical theorems.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Proof Assistants}
+  \begin{itemize}
+    \item Isabelle (1986) (tactics!)
+    \item Coq (1989) (tactics!)
+    \item Agda (2007)
+  \end{itemize}
+\end{frame}
+\end{document}

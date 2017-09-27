@@ -1,0 +1,5 @@
+Intro to Interactive Theorem Proving
+Joomy Korkut
+October 5th, 2017.
+
+Writing and checking proofs by hand is a lot of work, especially if we need to do proof by exhaustion. Using software tools called proof assistants, we can automate certain parts of the proof, and then check the proof on the computer. We will talk a bit about the theory behind them and then we will see a demo of some proofs with the Coq proof assistant.
