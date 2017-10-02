@@ -38,7 +38,7 @@
 \begin{frame}{How?}
 \begin{itemize}
 \item<1-> Curry-Howard isomorphism
-\item<2-> Calculus of inductive constructions
+\item<2-> Martin-L\"{o}f type theory
 \end{itemize}
 \end{frame}
 
@@ -58,7 +58,8 @@
         \UnaryInfC{$\Gamma \vdash A \to B$}
       \end{prooftree}
     \end{column}
-    \begin{column}{0.5\textwidth}  %%<--- here
+    \pause
+    \begin{column}{0.5\textwidth}
       \begin{prooftree}
         \AxiomC{$\Gamma, x : A \vdash t : B$}
         \UnaryInfC{$\Gamma \vdash \lambda x.t : A \to B$}
@@ -67,14 +68,14 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{Calculus of Inductive Constructions}
+\begin{frame}{Martin-L\"{o}f type theory}
   \begin{itemize}
-    \item Extension of Curry-Howard to a higher-order type theory
-    \item Allows $\forall$ and $\exists$ in your types
+    \item Extension of Curry-Howard to a full intuitionistic logic
+    \item So it allows $\forall$ and $\exists$ in your types
   \end{itemize}
   \pause
   \begin{alertblock}{Note}
-  CIC is constructive, but you can add
+  MLTT is constructive, but you can add
   the law of excluded middle as an axiom and prove classical theorems.
   \end{alertblock}
 \end{frame}

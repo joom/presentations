@@ -1,0 +1,570 @@
+\documentclass[10pt]{article}
+
+\usepackage{fullpage}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{enumerate}
+\usepackage{wasysym}
+\usepackage{stmaryrd}
+\usepackage{textgreek}
+\usepackage{bussproofs}
+\usepackage{pifont,mdframed}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true}
+\makeatletter
+\def\mathcolor#1#{\@mathcolor{#1}}
+\def\@mathcolor#1#2#3{%
+  \protect\leavevmode
+  \begingroup
+    \color#1{#2}#3%
+  \endgroup
+}
+\makeatother
+
+\newtheorem{claim}{Claim}
+\newtheorem{lem}{Lemma}
+% \newtheorem{problem}{Problem}
+\newtheorem{problem}{Example}
+\newtheorem*{theorem}{Theorem}
+\newenvironment{solution}[1][\emph{Solution:}]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{warning}
+  {\par\begin{mdframed}[linewidth=1pt,linecolor=black]%
+    \begin{list}{}{\leftmargin=1cm
+                   \labelwidth=\leftmargin}\item[\Large\ding{43}]}
+  {\end{list}\end{mdframed}\par}
+
+\renewcommand{\l}{\lambda}
+\newcommand{\barrow}{\ensuremath{\Rightarrow_\beta}}
+\newcommand{\imp}{\ensuremath{\Rightarrow}}
+
+\newcommand{\inj}{\hookrightarrow}
+\newcommand{\surj}{\twoheadrightarrow}
+\newcommand{\bij}{\stackrel{\sim}{\longrightarrow}}
+\newcommand{\set}[1]{\{#1\}}
+\newcommand{\sep}{\;|\;}
+
+\linespread{1.2}
+
+\title{COMP360 Automated Theorem Proving - Lecture Notes}
+\author{Joomy Korkut}
+\date{Spring 2016}
+% TODO BOOK pg 133
+\begin{document}
+
+\maketitle
+
+\section{Conjunctive Normal Form}
+
+\begin{itemize}
+\item A \emph{literal} is a propositional symbol $P$ or its negation $\lnot P$.
+\item A \emph{clause} is a disjunction of literals. e.g. $P \lor (\lnot Q) \lor R$ is a clause. Note that the empty clause $\Box$ is a clause, but it is always false since it has no true element.
+\item A \emph{formula} is the a disjunction of clauses. $P \land (Q \lor (\lnot R))$ is a formula, consisting of the clauses $P$ and $Q \lor (\lnot R)$. Note that the empty formula $\emptyset$ is a formula, but it is always true since it has no false element.
+\item For conversion of a proposition into CNF, you can use the following logical equivalencies, which we know to be true in classical logic:
+
+    \begin{itemize}
+        \item Implication : $(P \imp Q) \iff (\lnot P) \lor Q$
+        \item Double negation : $P \iff \lnot(\lnot P)$
+        \item De Morgan's law : $\lnot(P \lor Q) \iff (\lnot P) \land (\lnot Q)$
+        \item De Morgan's law : $\lnot(P \land Q) \iff (\lnot P) \lor (\lnot Q)$
+        \item Distributive law : $P \lor (Q \land R) \iff (P \lor Q) \land (P \lor R)$
+        \item Distributive law : $P \land (Q \lor R) \iff (P \land Q) \lor (P \land R)$
+    \end{itemize}
+\end{itemize}
+\begin{problem}
+Conversion the following proposition to CNF: $(A \land B) \lor (C \land D) \lor E$.
+\end{problem}
+\begin{solution}
+\begin{align*}
+& (A \land B) \lor (C \land D) \lor E\\
+&= (A \lor (C \land D)) \land (B \lor (C \land D)) \lor E \quad\text{(by distributive law 1 $\imp$ flipped)}\\
+&= E \lor (A \lor (C \land D)) \land (B \lor (C \land D)) \quad\text{(flipping)}\\
+&= (E \lor (A \lor (C \land D))) \land (E \lor (B \lor (C \land D))) \quad\text{(by distributive law 1 $\imp$)}\\
+&= (E \lor ((A \lor C) \land (A \lor D)) \land (E \lor (B \lor (C \land D))) \quad\text{(by distributive law 1 $\imp$)}\\
+&= ((E \lor A \lor C) \land (E \lor A \lor D)) \land (E \lor (B \lor (C \land D))) \quad\text{(by distributive law 1 $\imp$)}\\
+&= ((E \lor A \lor C) \land (E \lor A \lor D)) \land (E \lor ((B \lor C) \land (B \lor D))) \quad\text{(by distributive law 1 $\imp$)}\\
+&= ((E \lor A \lor C) \land (E \lor A \lor D)) \land (E \lor B \lor C) \land (E \lor B \lor D))) \quad\text{(by distributive law 1 $\imp$)}
+\end{align*}
+The resulting proposition is a conjunction of clauses, hence it is in CNF. We can also represent this as a set of sets, where the inner sets represent clauses (disjunction) and the outer set represents the formula (conjunction). So the result we reached above would be represented as $\set{\set{E,A,C}, \set{E,A,D}, \set{E,B,C}, \set{E,B,D}}$. This is the representation we are going to use in resolution.
+\end{solution}
+
+\begin{problem}
+Convert the following proposition to CNF: $\lnot (((A \imp B) \land A) \imp B)$.
+\end{problem}
+\begin{solution}
+\begin{align*}
+& \lnot (((A \imp B) \land A) \imp B)\\
+&= \lnot (((\lnot A) \lor B) \land A) \imp B) \quad\text{(by implication)}\\
+&= \lnot (\lnot ((\lnot A) \lor B) \land A) \lor B) \quad\text{(by implication)}\\
+&= ((\lnot A) \lor B) \land A) \land (\lnot B) \quad\text{(by De Morgan's 1 $\imp$)}
+\end{align*}
+Once again, we reached a conjunction of clauses. Let's write this in set representation: $\set{\set{\lnot A, B}, \set{A}, \set{\lnot B}}$.
+\end{solution}
+
+\subsection{CNF Conversion Algorithm}
+
+The input to our algorithm is a proposition. The output is either a proposition in CNF, or a formula in our set notation.
+
+\begin{enumerate}
+\item Go through the proposition and recursively apply to implication rule in the $\imp$ direction.
+\item Go through the resulting proposition and recursively apply the double negation rule and De Morgan's laws in the $\imp$ direction.
+\item Go through the resulting proposition and look for $\lor$ connectives. When you see $P \lor Q$, recursively apply step 3 to $P$ and $Q$ and get $P'$ and $Q'$. Apply the distributive law in the $\imp$ direction to $P' \lor Q'$. Recursively apply step to all immediate subformulae of other connectives.
+\item As a result, you will get a proposition in CNF.
+
+It can be just a clause, which means it does not have any $\land$ in it, in that case, represent the clause in a set $S$ and your formula's set representation will be $\set{S}$.
+
+Otherwise it will have $\land$ as the outermost (principal) connective. For $P \land Q$, recursively apply step 4 to $P$ and $Q$ and get two sets $S_P, S_Q$. Your result will be $S_P \cup S_Q$.
+\end{enumerate}
+
+\section{Resolution}
+
+\subsection{Resolution rule}
+Let $C_1, C_2$ be clauses (sets of disjunctions of literals) such that $P \in C_1$ and $(\lnot P) \in C_2$.
+The resolution rule states that we can deduce $(C_1 \cup C_2) \setminus \set{P, \lnot P}$ from this. What we deduce from the rule is called a \emph{resolvent}.
+In a more formal notation:
+\begin{prooftree}
+    \AxiomC{$C_1$}
+    \AxiomC{$C_2$}
+    \RightLabel{\scriptsize where $P \in C_1, (\lnot P) \in C_2$}
+    \BinaryInfC{$(C_1 \cup C_2) \setminus \set{P, \lnot P}$}
+\end{prooftree}
+For example, if we have the clauses $\set{P, \lnot Q}$ and $\set{Q, R}$, the resolution rule allows us to deduce $\set{P, R}$.
+In propositional notation, this means we are deducing $P \lor R$ from $P \lor (\lnot Q)$ and $Q \lor R$.
+
+\begin{warning}
+Note that the resolution rule is not destructive. Even though the resolution rule creates new clauses, it does not require you to remove the old ones. You can resolve other clauses with the ones you used before.
+\end{warning}
+
+\subsection{Resolution refutation}
+Resolution refutation is a contradiction based proof method that only has one rule. The other rules are hidden in the formatting rules when we are converting the input to CNF. If we want to show $\Gamma \vdash \Delta$, we negate the elements of $\Delta$, convert $\Gamma$s and negated $\Delta$s to CNF and then apply the resolution rule until we reach the clause $\Box$, or until we cannot apply the rule anymore.
+
+\begin{problem} Prove the following propositional sequent with resolution: $\vdash ((A \imp B) \land A) \imp B$
+\end{problem}
+\begin{solution}
+Since the right side of $\vdash$ only has one element, we negate it and convert it to CNF. The negated version is $\lnot(((A \imp B) \land A) \imp B)$. We already did the CNF conversion of this as an example before, so we get the set representation $\set{\set{\lnot A, B}, \set{A}, \set{\lnot B}}$. Let's apply the resolution rule now.
+
+\begin{align*}
+& \set{\set{\lnot A, B}, \set{A}, \set{\lnot B}}\\
+& \set{\set{B}, \set{\lnot B}} \quad\text{(by resolving $\set{\lnot A,B}$ and $\set{A}$)}\\
+& \set{\Box}
+\end{align*}
+Let's do another example. e.g. $(C \lor (A \land B)) \vdash ((C \lor A) \land (C \lor B))$. Let's convert the left hand side of $\vdash$ to CNF. By applying the distributive law, the left side becomes $(C \lor A) \land (C \lor B)$. Now let's negate the right hand side of $\vdash$ and convert it to CNF.
+\begin{align*}
+& \lnot (((C \lor A) \land (C \lor B)))\\
+&= (\lnot(C \lor A)) \lor (\lnot (C \lor B)) \quad\text{(by De Morgan's 1 $\imp$)}\\
+&= ((\lnot C) \land (\lnot A)) \lor (\lnot (C \lor B)) \quad\text{(by De Morgan's 1 $\imp$)}\\
+&= ((\lnot C) \land (\lnot A)) \lor ((\lnot C) \land (\lnot B)) \quad\text{(by De Morgan's 1 $\imp$)}\\
+&= (\lnot C) \land ((\lnot A) \lor (\lnot B)) \quad\text{(by distributive law 1 $\Leftarrow$)}
+\end{align*}
+So for the right hand side, we have $\set{\set{\lnot C}, \set{\lnot A, \lnot B}}$. We already had $\set{\set{C,A}, \set{C,B}}$ for the left hand side. Now we run the resolution rule on the union of these two:
+\begin{align*}
+& \set{\set{C,A}, \set{C,B}, \set{\lnot C}, \set{\lnot A, \lnot B}}\\
+& \set{\set{C,\lnot B}, \set{C,B}, \set{\lnot C}}  \quad\text{(by resolving $\set{C,A}$ and $\set{\lnot A, \lnot B}$)}\\
+& \set{\set{C}, \set{\lnot C}} \quad\text{(by resolving $\set{C,\lnot B}$ and $\set{C, B}$)}\\
+& \set{\Box}
+\end{align*}\newpage
+Observe that if you follow a different order of resolution, you will have to use one of the clauses more than one time, and that is allowed. You can see the reused clause below in bold.
+\begin{align*}
+& \set{\set{C,A}, \set{C,B}, \set{\lnot C}, \set{\lnot A, \lnot B}}\\
+& \set{\set{A}, \set{C,B}, \mathbf{\set{\lnot C}}, \set{\lnot A, \lnot B}}  \quad\text{(by resolving $\set{C,A}$ and $\set{\lnot C}$)}\\
+& \set{\set{A}, \set{B}, \set{\lnot A, \lnot B}}  \quad\text{(by resolving $\set{C,B}$ and $\set{\lnot C}$)}\\
+& \set{\set{B}, \set{\lnot B}}  \quad\text{(by resolving $\set{A}$ and $\set{\lnot A, \lnot B}$)}\\
+& \set{\Box}
+\end{align*}
+\end{solution}
+
+\subsection{Resolution Algorithm}
+
+The input to our algorithm is a formula in our set notation.
+$O$ is the set of old/used clauses.
+$N$ is the set of new/unused clauses.
+
+\begin{enumerate}
+\item Pick $C_1 \in N$, resolve with all $C_2 \in O \cup N$. Let $k$ be the resolvent.
+\item If $k \notin O \cup N$, add $k$ to $N$.
+\item Remove $C_1$ from $N$ an put it into $O$.
+\item Return the proof if you have $\Box$.
+\item If $N$ is not empty, go to step 1. If $N$ is empty, conclude that the formula cannot be proved.
+\end{enumerate}
+
+\section{First-order logic}
+
+\subsection{Prenex normal form}
+
+Prenex normal form is the form of a formula where we have all the universal and existential quantifiers \emph{in the beginning} of the formula. So if we have $\forall x (\exists y R(y)) \lor (\exists z (S(z)) \imp T(x))$, we want to get $\forall x \exists y \forall z (R(y) \lor (S(z) \imp T(x)))$ as a result.
+
+Here are the conversion rules:
+\begin{itemize}
+\setlength\itemsep{0.1em}
+\item Conjunction and disjunction
+\begin{itemize}
+\setlength\itemsep{0.1em}
+    \item $(\forall x P) \land Q$ becomes $\forall x (P \land Q)$.
+    \item $(\forall x P) \lor Q$ becomes $\forall x (P \lor Q)$.
+    \item $(\exists x P) \land Q$ becomes $\exists x (P \land Q)$.
+    \item $(\exists x P) \lor Q$ becomes $\exists x (P \lor Q)$.
+\end{itemize}
+
+\item Negation
+\begin{itemize}
+\setlength\itemsep{0.1em}
+    \item $\lnot (\exists x P)$ becomes $\forall x (\lnot P)$.
+    \item $\lnot (\forall x P)$ becomes $\exists x (\lnot P)$.
+\end{itemize}
+\newpage
+\item Implication
+\begin{itemize}
+\setlength\itemsep{0.1em}
+    \item $(\forall x P) \imp Q$ becomes $\exists x (P \imp Q)$.
+    \item $(\exists x P) \imp Q$ becomes $\forall x (P \imp Q)$.
+    \item $P \imp (\forall x Q)$ becomes $\forall x (P \imp Q)$.
+    \item $P \imp (\exists x Q)$ becomes $\exists x (P \imp Q)$.
+\end{itemize}
+\end{itemize}
+
+\begin{warning}
+An important point to remember is that you can accidentally capture a free variable with your quantifier, which will give you an incorrect formula. Here is an example of this: $(\forall x R(x,y)) \imp R(x,y)$. If we apply the implication rule directly, this will become $\forall x (R(x,y) \imp R(x,y))$. \textbf{This is an error.} You have to rename the quantifier variable and apply the rule only after renaming. We first rename the bounded variable, so the formula becomes $(\forall z R(z,y)) \imp R(x,y)$. Now we can apply the rule, so we have $\forall z (R(z,y) \imp R(x,y))$. This is equivalent to what we had in the beginning.
+\end{warning}
+
+If we wanted to implement a converter to prenex normal form, we would have to make sure that our implementation does not accidentally capture free variables. An easy solution would be to generate fresh variables and rename all bounded variables with fresh variable names. In that case, we would eliminate the possibility of accidental capture. Another solution would be to check if the free variables and bounded variables have the same name, and rename that bounded variable if there is one.
+
+\begin{problem}
+Convert the following formula to prenex normal form: $\forall x R(x) \imp \exists x R(x)$.
+\end{problem}
+\begin{solution}
+\begin{align*}
+& \forall x R(x) \imp \exists x R(x)\\
+&= \exists x (R(x) \imp \exists x R(x)) \quad\text{(by implication for $\forall$)}\\
+&= \exists x (R(x) \imp \exists y R(y)) \quad\text{(renaming the bounded variable)}\\
+&= \exists x \exists y (R(x) \imp  R(y)) \quad\text{(by implication for $\exists$)}
+\end{align*}
+\end{solution}
+
+\begin{problem}
+Convert the following formula to prenex normal form: $\lnot ((\exists x P(x)) \lor (\exists x Q(x)))$
+\end{problem}
+\begin{solution}
+\begin{align*}
+& \lnot ((\exists x P(x)) \lor (\exists x Q(x)))\\
+&= \lnot (\exists x (P(x) \lor (\exists x Q(x)))) \quad\text{(by disjunction for $\exists$)}\\
+&= \lnot (\exists x (P(x) \lor (\exists y Q(y)))) \quad\text{(renaming the bounded variable)}\\
+&= \lnot (\exists x \exists y (P(x) \lor Q(y))) \quad\text{(by disjunction for $\exists$)}\\
+&= \forall x \lnot (\exists y (P(x) \lor Q(y))) \quad\text{(by negation for $\exists$)}\\
+&= \forall x \forall y (\lnot (P(x) \lor Q(y))) \quad\text{(by negation for $\exists$)}
+\end{align*}
+\end{solution}
+
+\newpage
+\subsection{Skolemization}
+
+Skolemization is the process of removing the existential quantifiers ($\exists$s) from our formulae. It proceeds as the following: $\forall x_1 \forall x_2 ... \forall x_n \exists y R(x,y)$ becomes $\forall x_1 \forall x_2 ... \forall x_n R(x, f(x_1, x_2, ..., x_n))$. The intuition behind it is that if you had different values for the universal quantifiers $x_1, x_2, ..., x_n$, the $y$ you would pick would change. Hence the value $y$ bounded by the existential quantifier in fact depends on $x_1, x_2, ..., x_n$. We can represent this with a Skolem function, that picks the $y$ for given input $x_1, x_2, ..., x_n$. If there is no universal quantifier that the existential quantifier depends on, then the Skolem function will have the arity 0, which makes it a Skolem constant. e.g. $\exists y \forall x R(x,y)$ becomes, $\forall x R(x,c)$, where $c$ is the Skolem constant.
+\begin{warning}
+Every time you skolemize an existential quantifier, you have to use a fresh Skolem constant/function.
+\end{warning}
+Let's do an example: $\forall x \exists y \forall z R(x,y,z)$ becomes $\forall x \forall z R(x, f(x), z)$. Observe that the Skolem function only includes the universal quantifier variables than come \emph{before} our existential quantifier. $\forall x$ comes before $\exists y$, so it is included in $f(x)$, but $\forall z$ comes after $\exists y$, so it should not be included in $f(x)$, because $y$ does not depend on $z$.
+
+\subsection{First-order resolution}
+
+Before we discuss the resolution rule for first-order logic, let's see what we have in the big picture. In propositional logic, we could directly convert our proposition to CNF and then resolve. However, the quantifiers are an obstacle when we try to do the same to first-order formulae. Therefore, we convert our formula to prenex normal form and thereby obtain a formula where all the quantifiers are in the beginning. We will now skolemize our formula and get rid of the existential quantifiers. Then we can make the universal quantifiers implicit, in other words, we will remove the quantifiers by making them metavariables. Now we have a quantifier-free formula! There is no obstacle to convert it to CNF and get a formula in our set notation.
+
+However, when we want to prove it, our resolution rule from propositional logic is not enough to prove first-order logic formula. Let's update our rule:
+
+Let $C_1, C_2$ be clauses (sets of disjunctions of literals) such that $P \in C_1$ and $Q \in C_2$.
+The resolution rule states that, if the substitution list $\theta$ is a most general unifier for $P$ and $\lnot Q$, then we can deduce $(C_1 \cup C_2) \setminus \set{P, Q}$ from this.
+In a more formal notation:
+\begin{prooftree}
+    \AxiomC{$C_1$}
+    \AxiomC{$C_2$}
+    \RightLabel{\scriptsize where $P \in C_1, Q \in C_2, \theta$}
+    \BinaryInfC{$((C_1 \cup C_2) \setminus \set{P, Q})\theta$}
+\end{prooftree}
+
+\begin{problem}
+Prove the following sequent with resolution:
+$\exists x (P(x) \lor Q(x)) \vdash (\exists x P(x)) \lor (\exists x Q(x))$.
+\end{problem}
+
+\begin{solution}
+Let's look at the left hand side. It is already in prenex normal form. Let's skolemize it. It should become $P(c) \lor Q(c)$, where $c$ is a Skolem constant. With the set notation, we now have $\set{\set{P(c), Q(c)}}$.
+
+Let's look at the right hand side. We are supposed to negate it and then convert it to prenex normal form. The negated version is $\lnot ((\exists x P(x)) \lor (\exists x Q(x)))$. We converted this to prenex normal form as an exercise before.
+So now we have $\forall x \forall y (\lnot (P(x) \lor Q(y)))$. We make the universal quantifiers implicit (meta-variables), so what we have is $(\lnot (P(X) \lor Q(Y)))$. We now need to convert this to CNF. By the application of De Morgan's law, we can easily get $(\lnot P(X)) \land (\lnot Q(Y))$. Now we have a CNF formula which corresponds to $\set{\set{\lnot P(X)}, \set{\lnot Q(Y)}}$ in set notation. Let's apply the resolution rule now.
+\begin{align*}
+& \set{\set{P(c), Q(c)}, \set{\lnot P(X)}, \set{\lnot Q(Y)}}\\
+& \set{\set{ Q(c)} \set{\lnot Q(Y)}}  \quad\text{(by the substitution [c/X])}\\
+& \set{\Box}  \quad\text{(by the substitution [c/Y])}
+\end{align*}
+\end{solution}
+
+\begin{problem}
+Prove the Drinker paradox with resolution: $\vdash \exists y (D(y) \imp (\forall x D(x)))$.
+\end{problem}
+\begin{solution}
+Let's convert the negation of the right hand side to prenex normal form.
+\begin{align*}
+& \lnot (\exists y (D(y) \imp (\forall x D(x))))\\
+& \lnot (\exists y \forall x (D(y) \imp D(x)))  \quad\text{(by implication for $\forall$)}\\
+& \forall y (\lnot (\forall x (D(y) \imp D(x))))  \quad\text{(by negation for $\exists$)}\\
+& \forall y \exists x ( \lnot (D(y) \imp D(x))))  \quad\text{(by negation for $\forall$)}
+\end{align*}
+If we replace $y$ with a meta-variable and $x$ with a Skolem function, we will obtain $\lnot (D(Y) \imp D(f(Y)))$. Let's convert this to CNF.
+\begin{align*}
+& \lnot (D(Y) \imp D(f(Y)))\\
+& \lnot ((\lnot D(Y)) \lor D(f(Y))) \quad\text{(by implication)}\\
+& D(Y) \land (\lnot D(f(Y))) \quad\text{(by De Morgan's 1 $\imp$)}
+\end{align*}
+In set representation, we now have $\set{\set{D(Y)}, \set{\lnot D(f(Y))}}$. Let's try to resolve this. Note that $D(Y)$ and $D(f(Y))$ are not unifiable. \textbf{However, we are allowed to rename any free variable in any clause we want. (given that you rename all meta-variables with the same name in that clause)} This will allow us to prove the formula.
+\begin{align*}
+& \set{\set{D(Y)}, \set{\lnot D(f(Y))}}\\
+& \set{\set{D(Z)}, \set{\lnot D(f(Y))}} \quad\text{(by changing $Y$ to $Z$ in the first clause)}\\
+& \set{\Box} \quad\text{(by the substitution [f(Y)/Z])}
+\end{align*}
+\end{solution}
+
+\begin{problem}
+Prove the following sequent using resolution. (Asymmetric relations are also antisymmetric.) (Hint: $<$ and $=$ are just relations here. You can replace $x<y$ with $R(x,y)$ and it would be the same thing. However, $<$ and $=$ are different relations.)
+$$\forall x \forall y ((x < y) \imp \lnot (y < x)) \vdash \forall x \forall y \big(((x<y) \land (y < x)) \imp x = y\big)$$
+\end{problem}
+
+\begin{solution}
+Let's look at the left hand side first. It's already in prenex normal form.
+$\forall x \forall y ((x < y) \imp \lnot (y < x))$ becomes $((X < Y) \imp \lnot (Y < X))$ by removing the universal quantifiers and replacing their variables with meta-variables. Now observe that
+\begin{align*}
+& (X < Y) \imp \lnot (Y < X)\\
+&= (\lnot (X < Y)) \lor (\lnot (Y < X))  \quad\text{(by implication)}
+\end{align*}
+We have a formula in CNF now. In set notation this would become: $\set{\set{\lnot (X < Y), \lnot (Y < X)}}$.
+Now let's look at the right hand side.
+We have a single formula there. Let's negate it.
+\begin{align*}
+& \lnot \Big(\forall x \forall y \big(((x<y) \land (y < x)) \imp (x = y)\big)\Big)\\
+&= \lnot \Big(\forall x \forall y \big(\lnot ((x<y) \land (y < x)) \lor (x = y)\big)\Big) \quad\text{(by implication)}\\
+&= \exists x \lnot \Big( \forall y \big(\lnot ((x<y) \land (y < x)) \lor (x = y)\big)\Big) \quad\text{(by negation for $\forall$)}\\
+&= \exists x \exists y \lnot \big(\lnot ((x<y) \land (y < x)) \lor (x = y)\big) \quad\text{(by negation for $\forall$)}\\
+&= \exists x \exists y \lnot \big(\lnot ((x<y) \land (y < x)) \lor (x = y)\big) \quad\text{(by negation for $\forall$)}
+\end{align*}
+Now we have something in prenex normal form. If we replace the existential quantifiers with Skolem constants, we will get $\lnot \big(\lnot ((c<d) \land (d < c)) \lor (c = d)\big)$. Let's convert this to CNF.
+\begin{align*}
+& \lnot \big(\lnot ((c<d) \land (d < c)) \lor (c = d)\big)\\
+&= \big(((c<d) \land (d < c)) \land (\lnot(c = d))\big) \quad\text{(by De Morgan's law 1 $\imp$)}
+\end{align*}
+Now we have a formula in CNF. In set notation: $\set{\set{c<d}, \set{d<c}, \set{\lnot (c=d)}}$.
+So now for the resolution, let's get the union of the set notations we have for left and right hand sides and apply resolution to it.
+\begin{align*}
+& \set{\set{\lnot (X < Y), \lnot (Y < X)}, \set{c<d}, \set{d<c}, \set{\lnot (c=d)}}\\
+& \set{\set{\lnot (d < c)}, \set{d<c}, \set{\lnot (c=d)}} \quad\text{(by resolving the first two clauses with [c/X, d/Y])}\\
+& \set{\Box, \set{\lnot (c=d)}} \quad\text{(by resolving the first two clauses)}
+\end{align*}
+Since we reached $\Box$ (which is always false), we proved our sequent.
+\end{solution}
+
+\section{Superposition Calculus}
+
+
+Our objective is to extend resolution with the equality concept we introduced in previous classes.
+
+\subsection{New notation}
+We now consider $t \approx u$ a formula, and a literal. Its negation $t \not\approx u$ is also considered a literal. We assume $t \approx u$ and $u \approx t$ are the same atom.
+
+We write $E[s]$ to mean an expression $E$ with a particular occurrence of a term $s$. When we use the notation $E[s]$ and then write $E[t]$, the latter means the expression obtained from $E[s]$ by replacing the distinguished occurrence of $s$ by the term $t$.
+
+\subsection{Na\"ive approach}
+
+We can convert the axioms into clauses, with the process we did in resolution (through CNF, prenex normal form etc.):
+
+\begin{itemize}
+\item Reflexivity: $\set{t \approx t}$
+\item Transitivity: $\set{t \not\approx u, u \not\approx v, t \approx v}$
+\item Congruence for all terms: $\set{t_1 \not\approx u_1, ... , t_n \not\approx u_n, f(t_1,...,t_n) \approx f(u_1,...,u_n)}$
+\item Congruence for all formulae: $\set{t_1 \not\approx u_1, ... , t_n \not\approx u_n, \lnot P(t_1,...,t_n), P(u_1,...,u_n)}$
+\end{itemize}
+
+While this works in theory, this way is too verbose for practical use. There are also other problems caused by our axioms resolving each other. Therefore we will incorporate our equality notion to our resolution rule and get a new rule.
+
+\subsection{Simplification (reduction) ordering}
+
+During the inference process, applying our rule involves numerous rewrites, and this number increases quite fast.
+However if we suggest a restriction on how the rewrites will be done, this number can be reduced and we can make the inference more efficient. We will try to rewrite big terms to smaller terms and we will suggest an ordering on terms to achieve this.
+
+We want to introduce a total ordering between ground terms, namely $\succ$. We want this ordering to satisfy certain properties:
+
+\begin{enumerate}
+\item Well-foundedness. (There is no infinite sequence of terms $t_1, t_2, ...$ such that $t_1 \succ t_2 \succ ...$.)
+\item Monotonic. (If $l \succ r$, then $s[l] \succ s[r]$.)
+\item Stable under substitutions. (If $l \succ r$, then $l\theta \succ r\theta$.)
+\item Subterm property. (If $r$ is a strict subterm of $l$, then $l \succ r$.)
+\end{enumerate}
+
+
+\subsection{Ground superposition}
+
+In order to deal with equality directly, we will add new rules to our system, but we will keep using the resolution rule. To understand the intuition of these rules, let's first consider the system where the only predicate is equality.
+
+\subsubsection{Positive superposition rule}
+
+\begin{prooftree}
+    \AxiomC{$\set{t \approx t'}\cup C_1$}
+    \AxiomC{$\set{s[t] \approx s'}\cup C_2$}
+    \RightLabel{\scriptsize where $t \succ t'$, $s[t] \succ s'$}
+    \BinaryInfC{$\set{s[t'] \approx s'} \cup C_1 \cup C_2$}
+\end{prooftree}
+
+\subsubsection{Negative superposition rule}
+
+\begin{prooftree}
+    \AxiomC{$\set{t \approx t'}\cup C_1$}
+    \AxiomC{$\set{s[t] \not\approx s'}\cup C_2$}
+    \RightLabel{\scriptsize where $t \succ t'$ and $s[t] \succ s'$}
+    \BinaryInfC{$\set{s[t'] \not\approx s'} \cup C_1 \cup C_2$}
+\end{prooftree}
+
+\subsubsection{Equality reflexivity rule}
+
+\begin{prooftree}
+    \AxiomC{$\set{s \not\approx s}\cup C$}
+    % \RightLabel{\scriptsize where $t \succ t'$ and $s[t] \succ s'$}
+    \UnaryInfC{$C$}
+\end{prooftree}
+
+Since we know reflexivity always holds for equality, $s \not\approx s$ is not possible.
+
+
+\subsubsection{Equality factoring rule}
+
+\begin{prooftree}
+    \AxiomC{$\set{t_1 \approx t_2, t_1 \approx t_3}\cup C$}
+    \RightLabel{\scriptsize where $t_1 \succ t_2$ and $t_2 \succeq t_3$}
+    \UnaryInfC{$\set{t_1\approx t_2, t_2 \not\approx t_3} \cup C$}
+\end{prooftree}
+
+This rule seems less intuitive than the others, so a verbal explanation would be helpful. We know that $t_1 \approx t_2$ or $t_1 \approx t_3$ holds. We want to show that $t_1\approx t_2$ or $t_2 \not\approx t_3$ holds.
+
+\emph{First case:} If $t_1\approx t_2$, then we already know what we were hoping to show.
+
+\emph{Second case:} If $t_1 \approx t_3$, then suppose $t_1 \not\approx t_2$ for now, because if they were $\approx$ then we would finish our proof in the first case. Since $t_1 \approx t_3$, we can replace $t_1$ with $t_3$ in $t_1 \not\approx t_2$. Therefore $t_2 \not\approx t_3$.
+
+\begin{problem}
+Prove the following sequent using ground superposition.
+$$\vdash \forall x \forall y (x\approx y \imp y\approx x)$$
+\end{problem}
+
+\begin{proof}
+Let's negate the right hand side and convert it to prenex normal form, skolemize it and convert it to CNF.
+\begin{align*}
+& \lnot (\forall x \forall y (x\approx y \imp y\approx x))\\
+& \exists x \exists y \lnot (x\approx y \imp y\approx x))\\
+& \lnot (a\approx b \imp b \approx a)\\
+& \lnot  (a\not\approx b \lor b \approx a)\\
+& a \approx b \land b\not\approx a
+\end{align*}
+Now we have the formula $\set{\set{a\approx b}, \set{b \not\approx a}}$ to apply the rules on. Since $b\approx a$ and $a \approx b$ are the same atom, we are looking at $\set{\set{b\approx a}, \set{b \not\approx a}}$. Using the resolution rule we get $\Box$.
+\end{proof}
+
+\begin{problem}
+Prove the following sequent using ground superposition.
+$$\vdash \forall x \forall y \forall z ((x\approx y \land y\approx z) \imp x\approx z)$$
+\end{problem}
+
+\begin{proof}
+Let's negate the right hand side and convert it to prenex normal form, skolemize it and convert it to CNF.
+\begin{align*}
+& \lnot (\forall x \forall y \forall z ((x\approx y \land y\approx z) \imp x\approx z)\\
+& \exists x \exists y \exists z \lnot ((x\approx y \land y\approx z) \imp x\approx z)\\
+& \lnot ((a\approx b \land b\approx c) \imp a\approx c)\\
+& \lnot (\lnot (a\approx b \land b\approx c) \lor a\approx c)\\
+& ((a\approx b \land b\approx c) \land  a\not\approx c)
+\end{align*}
+
+\newpage
+
+Let's move this to set notation and complete the proof. Suppose the order is $c \succ b \succ a$.
+\begin{align*}
+& \set{\set{b\approx a}, \set{c\approx b}, \set{c\not\approx a}}\\
+& \set{\set{b\approx a}, \set{b\not\approx a}} \quad\text{(by negative sp of the 2nd and 3rd clauses, since $c \succ a$ and $b \succ a$)}\\
+& \set{\Box} \quad\text{(by resolution)}
+\end{align*}
+\end{proof}
+
+Of course, what we can do with ground superposition is limited, so we will later look at non-ground superposition.
+
+\begin{problem}
+Prove the following sequent using ground superposition.
+$$\vdash \forall x \forall y \forall z ((x\approx f(y) \land y\approx g(z)) \imp x\approx f(g(z))$$
+\end{problem}
+
+\begin{proof}
+After conversion to prenex normal form, CNF and skolemization, in set notation, this would be: $\set{\set{a \approx f(b)}, \set{b\approx g(c)}, \set{a \not\approx f(g(c))}}$.
+Suppose the order is $f(c) \succ f(b) \succ f(a) \succ c \succ b \succ a$.
+Then we complete the proof with:
+\begin{align*}
+& \set{\set{f(b) \approx a}, \set{g(c)\approx b}, \set{f(g(c)) \not\approx a}}\\
+& \set{\set{f(b)\approx a}, \set{f(b) \not\approx a}} \quad\text{(by negative sp of the 2nd and 3rd clauses, since $g(c) \succ b$ and $f(g(c)) \succ a$)}\\
+& \set{\Box} \quad\text{(by resolution)}
+\end{align*}
+\end{proof}
+
+\subsection{Non-ground superposition}
+
+Now $\approx$ is not the only predicate we have, therefore once again we need substitutions. Don't forget that we still have our resolution rule for first-order logic.
+
+\subsubsection{Positive superposition rule}
+
+\begin{prooftree}
+    \AxiomC{$\set{t \approx t'}\cup C_1$}
+    \AxiomC{$\set{s[u] \approx s'}\cup C_2$}
+    \RightLabel{\scriptsize where $t \succ t'$, $s[u] \succ s'$, $\theta=mgu(t,u)$, $u$ is not a variable}
+    \BinaryInfC{$(\set{s[t'] \approx s'} \cup C_1 \cup C_2)\theta$}
+\end{prooftree}
+
+\subsubsection{Negative superposition rule}
+
+\begin{prooftree}
+    \AxiomC{$\set{t \approx t'}\cup C_1$}
+    \AxiomC{$\set{s[u] \not\approx s'}\cup C_2$}
+    \RightLabel{\scriptsize where $t \succ t'$ and $s[u] \succ s'$, $\theta=mgu(t,u)$, $u$ is not a variable}
+    \BinaryInfC{$(\set{s[t'] \not\approx s'} \cup C_1 \cup C_2)\theta$}
+\end{prooftree}
+
+\subsubsection{Equality reflexivity rule}
+
+\begin{prooftree}
+    \AxiomC{$\set{s \not\approx s'}\cup C$}
+    \RightLabel{\scriptsize where $\theta=mgu(s,s')$}
+    \UnaryInfC{$C\theta$}
+\end{prooftree}
+
+
+\subsubsection{Equality factoring rule}
+
+\begin{prooftree}
+    \AxiomC{$\set{t_1 \approx t_2, t_1' \approx t_3}\cup C$}
+    \RightLabel{\scriptsize where $t_1 \succ t_2$ and $t_2 \succeq t_3$, $\theta=mgu(t_1,t_1')$}
+    \UnaryInfC{$\set{t_1\approx t_2, t_2 \not\approx t_3} \cup C$}
+\end{prooftree}
+
+\subsubsection{Rule for superposition with other predicates}
+
+So far we only have rules for equalities to deal with each other, and the resolution rule to deal with all predicates (including $\approx$). However, our resolution rule does not make use of the ordering we defined. We can add a new rule to make use of this ordering when we are dealing with an equality and a predicate different than $\approx$.
+This rule is not necessary for our system, but it gives our proof a direction in terms of what to replace in the predicates, therefore our automated provers can complete the proof faster. In fact, the famous prover Vampire uses this rule. (\href{http://www.cse.chalmers.se/\~laurako/pub/CAV13\_Kovacs.pdf}{Kovacs, Voronkov})
+
+
+\begin{prooftree}
+    \AxiomC{$\set{t \approx t'}\cup C_1$}
+    \AxiomC{$L[u]\cup C_2$}
+    \RightLabel{\scriptsize where $t \succ t'$, $\theta=mgu(t,u)$, $u$ is not a variable}
+    \BinaryInfC{$(L[t'] \cup C_1 \cup C_2)\theta$}
+\end{prooftree}
+
+\begin{problem}
+Prove the following sequent using non-ground superposition. (It basically says, knowing the addition operation, prove that $1+2=3$.)
+$$\forall x \Big(add(o,x) \approx x\Big), \forall x,y,z \Big(add(x,y) \approx z \imp add(s(x),y) \approx s(z)\Big) \vdash add(s(o), s(s(o))) \approx s(s(s(o)))$$
+\end{problem}
+
+\begin{problem}
+Prove the following sequent using non-ground superposition.
+$$\forall x \Big(o\leq x\Big), \forall y,z\Big(y\leq z \imp s(y)\leq s(z)\Big), a \approx s(o), b \approx s(s(o)) \vdash a \leq b$$
+\end{problem}
+
+
+\end{document}
