@@ -1,5 +1,5 @@
 (* part 1 *)
-Inductive day : Type :=
+Inductive day : Set :=
   | monday    : day
   | tuesday   : day
   | wednesday : day
@@ -21,7 +21,7 @@ Definition next_day (d : day) : day :=
 
 Compute (next_day friday).
 
-Fixpoint app_times {a : Type} (f : a -> a) (x : a) (n : nat) : a :=
+Fixpoint app_times {a : Set} (f : a -> a) (x : a) (n : nat) : a :=
   match n with
   | O => x
   | S n' => app_times f (f x) n'
@@ -29,15 +29,10 @@ Fixpoint app_times {a : Type} (f : a -> a) (x : a) (n : nat) : a :=
 
 Compute (app_times next_day monday 7).
 
-Theorem seven_is_the_charm : forall d, d = app_times next_day d 7.
+Theorem seven_is_the_charm : forall (d : day), d = app_times next_day d 7.
 Proof. intros. destruct d; simpl; reflexivity. Qed.
 
 Print seven_is_the_charm.
-
-
-Theorem f_thrice :
-  forall (A : Type) (f : A -> A) (x : A), f (f (f x)) = app_times f x 3.
-Proof. intros. simpl. reflexivity. Qed.
 
 (* part 2 *)
 Module Nats.
@@ -70,7 +65,7 @@ Qed.
 
 (* part 3 *)
 
-Definition group (G : Type) (op : G -> G -> G) (e : G) :=
+Definition group (G : Set) (op : G -> G -> G) (e : G) :=
   (* associativity *)
   (forall (a b c : G), (op (op a b) c) = (op a (op b c)))
   /\
@@ -142,7 +137,7 @@ Qed.
 Print idempotent_e.
 
 Definition group_homomorphism
-  (G H : Type) (op_G : G -> G -> G) (op_H : H -> H -> H) (phi : G -> H) :=
+  (G H : Set) (op_G : G -> G -> G) (op_H : H -> H -> H) (phi : G -> H) :=
   forall (u v : G), phi (op_G u v) = op_H (phi u) (phi v).
 
 Theorem homomorphism_preserves_identity :

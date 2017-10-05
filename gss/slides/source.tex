@@ -1,5 +1,5 @@
 \documentclass{beamer}
-\usepackage{listings, bussproofs}
+\usepackage{listings, bussproofs, hyperref}
 
 \usetheme{Warsaw}
 \usecolortheme{wolverine}
@@ -14,6 +14,9 @@
 
 \begin{frame}
 \titlepage
+\begin{center}
+{\footnotesize\path{http://github.com/joom/presentations}}
+\end{center}
 \end{frame}
 
 \begin{frame}{Why?}
@@ -28,7 +31,7 @@
 \begin{itemize}
   \item<1-> Four color theorem (required checking 1,936 cases)
   \\ Appel \& Haken 1976 with computer assistance
-  \\ Werner \& Gonthier 2015 with Coq
+  \\ Werner \& Gonthier 2005 with Coq
   \item<2-> Kepler conjecture (hexagonal close packing of spheres)
   \\ Hales 1998 with computer assistance (C++ etc.)
   \\ Hales 2014 with HOL Light and Isabelle (Flyspeck)
@@ -65,7 +68,27 @@
         \UnaryInfC{$\Gamma \vdash \lambda x.t : A \to B$}
       \end{prooftree}
     \end{column}
+  \only<4->{\footnote{$\lambda x.t$ is a different notation for a function $x \mapsto t$}}
   \end{columns}
+ \pause
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{prooftree}
+        \AxiomC{$\Gamma \vdash A$}
+        \AxiomC{$\Gamma \vdash B$}
+        \BinaryInfC{$\Gamma \vdash A \land B$}
+      \end{prooftree}
+    \end{column}
+    \pause
+    \begin{column}{0.5\textwidth}
+      \begin{prooftree}
+        \AxiomC{$\Gamma \vdash a : A$}
+        \AxiomC{$\Gamma \vdash b : B$}
+        \BinaryInfC{$\Gamma \vdash (a, b) : A \times B$}
+      \end{prooftree}
+    \end{column}
+  \end{columns}
+
 \end{frame}
 
 \begin{frame}{Martin-L\"{o}f type theory}
@@ -85,6 +108,7 @@
     \item Isabelle (1986) (tactics!)
     \item Coq (1989) (tactics!)
     \item Agda (2007)
+    \item Idris (2007) (actually mainly a general purpose language)
   \end{itemize}
 \end{frame}
 \end{document}
