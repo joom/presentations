@@ -12,5 +12,8 @@ Theorem plus_assoc : forall n m p : nat,
   plus n (plus m p) = plus (plus n m) p.
 Proof. intros. omega. Qed.
 
-Theorem nat_total_order : forall (n m : nat), (n < m) \/ (n = m) \/ (n > m).
+Theorem nat_total_order : forall (n m : nat), (n <= m) \/ (m <= n).
+Proof. intros. omega. Qed.
+
+Theorem odds_arent_even: forall (n m : nat), 2 * n + 1 <> 2 * m.
 Proof. intros. omega. Qed.
